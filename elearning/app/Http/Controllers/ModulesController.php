@@ -2,10 +2,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Module;
 use App\Models\Course;
-use Illuminate\Support\Facades\Storage;
 
 class ModulesController extends Controller
 {
@@ -27,13 +25,20 @@ class ModulesController extends Controller
 
         // Lấy chap cao nhất trong khóa học này
         $maxChap = $course->modules()->max('chap');
-        $newChap = $maxChap ? $maxChap + 1 : 1; // Nếu chưa có module nào thì bắt đầu từ 1
+        $newChap = $maxChap ? $maxChap + 1 : 1;
 
-        // Lưu file video vào thư mục cụ thể
+        // Lưu file video vào thư mục chỉ định
         $videoFile = $request->file('video_url');
-        $videoName = time() . '_' . $videoFile->getClientOriginalName(); // Tạo tên file duy nhất
-        $videoPath = 'D:\code thue\daln\elearning\public\videos\\' . $videoName;
-        $videoFile->move('D:\code thue\daln\elearning\public\videos', $videoName);
+        $videoName = time() . '_' . $videoFile->getClientOriginalName();
+        $videoPath = 'D:\code thue\daln\E-LEARNING\elearning\public\videos\\' . $videoName;
+
+        // Kiểm tra xem thư mục có tồn tại không, nếu không thì tạo
+        if (!file_exists(dirname($videoPath))) {
+            mkdir(dirname($videoPath), 0777, true);
+        }
+
+        // Di chuyển file đến thư mục
+        $videoFile->move(dirname($videoPath), $videoName);
 
         // Lưu đường dẫn URL vào database
         $videoUrl = asset('videos/' . $videoName);
@@ -43,8 +48,8 @@ class ModulesController extends Controller
             'course_id' => $course->id,
             'title' => $request->title,
             'description' => $request->description,
-            'chap' => $newChap, // Tự động tăng
-            'video_url' => $videoUrl, // Lưu đường dẫn URL thay vì đường dẫn vật lý
+            'chap' => $newChap,
+            'video_url' => $videoUrl,
         ]);
 
         return redirect()->route('mentor.show', ['course' => $course])->with('success', 'Module đã được thêm!');
@@ -74,15 +79,21 @@ class ModulesController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'chap' => 'required|numeric|min:1',
-            'video_url' => 'nullable|file|mimes:mp4,mov,avi|max:20480', // 20MB max
+            'video_url' => 'nullable|file|mimes:mp4,mov,avi|max:20480',
         ]);
 
         // Nếu có file mới, lưu file và cập nhật đường dẫn
         if ($request->hasFile('video_url')) {
             $videoFile = $request->file('video_url');
             $videoName = time() . '_' . $videoFile->getClientOriginalName();
-            $videoPath = 'D:\code thue\daln\elearning\public\videos\\' . $videoName;
-            $videoFile->move('D:\code thue\daln\elearning\public\videos', $videoName);
+            $videoPath = 'D:\code thue\daln\E-LEARNING\elearning\public\videos\\' . $videoName;
+
+            // Kiểm tra thư mục
+            if (!file_exists(dirname($videoPath))) {
+                mkdir(dirname($videoPath), 0777, true);
+            }
+
+            $videoFile->move(dirname($videoPath), $videoName);
             $module->video_url = asset('videos/' . $videoName);
         }
 

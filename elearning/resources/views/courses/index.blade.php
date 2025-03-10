@@ -48,11 +48,18 @@
                         @endphp
                         
                         @if($progress == 100 && !$testResult)
-                        <a href="{{ route('courses.test', ['course' => $course->id, 'test' => $course->test->id]) }}" class="btn btn-info btn-sm">Làm bài kiểm tra</a>
-  
+                        @if($course->test)
+                            <a href="{{ route('courses.test', ['course' => $course->id, 'test' => $course->test->id]) }}" class="btn btn-info btn-sm">Làm bài kiểm tra</a>
+                        @else
+                            <span class="badge bg-warning">Chưa có bài kiểm tra</span>
+                        @endif
+
                         @elseif($testResult && !$testResult->passed)
                             <span class="badge bg-danger">Chưa đạt yêu cầu</span>
-                            <a href="{{ route('courses.test', $course->id) }}" class="btn btn-warning btn-sm">Thi lại</a>
+                            @if($course->test)
+                                <a href="{{ route('courses.test', ['course' => $course->id, 'test' => $course->test->id]) }}" class="btn btn-warning btn-sm">Thi lại</a>
+                            @endif
+
                         @elseif($testResult && $testResult->passed)
                             <span class="badge bg-success">Đã hoàn thành</span>
                             <a href="{{ route('courses.review', $course->id) }}" class="btn btn-primary btn-sm">Đánh giá khóa học</a>
